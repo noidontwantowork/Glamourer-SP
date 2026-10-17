@@ -1,4 +1,3 @@
-I don't know how to program. 
 All the plugins under this project were produced with the assistance of AI. 
 If any part or all of the content of any plugin is owned by someone, it belongs to the original author. 
 I do not own any rights to these plugins, and I am not responsible for any issues that these plugins may cause to your device or account. 
