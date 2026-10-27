@@ -3,7 +3,7 @@
 	"Author": "Ottermandias",
 	"Name": "Glamourer SP",
 	"Punchline": "改变和保存玩家外观。",
-	"Description": "为玩家提供更改保存自定义外貌和装备外观的功能。将预览选项添加到了Penumbra的“模组-更改项目”选项卡中。SP版本增加了对坐骑/宠物/召唤物的应用设计和自动执行支持。需要安装并启用Penumbra才能工作。",
+	"Description": "为玩家提供更改保存自定义外貌和装备外观的功能。\n将预览选项添加到了Penumbra的“模组-更改项目”选项卡中。\nSP版本增加了对坐骑/宠物/召唤物的应用设计和自动执行支持。\n需要安装并启用Penumbra才能工作。",
 	"Tags": ["Appearance", "Glamour", "Race", "Outfit", "Armor", "Clothes", "Skins", "Customization", "Design", "Character"],
     "InternalName": "Glamourer",
     "MinimumDalamudVersion": "15.0.0.2",
