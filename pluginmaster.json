@@ -11,6 +11,7 @@
     "TestingAssemblyVersion": "1.7.1.4",
     "RepoUrl": "https://github.com/noidontwantowork/Glamourer-SP",
     "ApplicableVersion": "any",
+    "ChangeLog": "新增了对坐骑/宠物/召唤物的自动执行集的支持。你现在可以让它们自动应用设计了。",		 
     "DalamudApiLevel": 15,
     "TestingDalamudApiLevel": 15,
     "IsHide": "False",
