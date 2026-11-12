@@ -1,0 +1,123 @@
+﻿using Glamourer.Designs;
+using Glamourer.Interop.Penumbra;
+using ImSharp;
+using Penumbra.Api.Preset;
+
+namespace Glamourer.Gui.Tabs.DesignTab;
+
+public sealed class ModCombo(PenumbraSubscriber penumbra, DesignFileSystem fileSystem) : FilterComboBase<ModCombo.CacheItem>(new ModFilter())
+{
+    public readonly struct CacheItem(in ModIdentifier mod, in SettingPresetData settings, int count)
+    {
+        public readonly StringPair        Name      = new(mod.Name);
+        public readonly StringPair        Directory = new(mod.Identifier);
+        public readonly SettingPresetData Settings  = settings;
+        public readonly int               Count     = count;
+
+        public readonly Vector4 Color = settings.State is ModState.Enabled
+            ? count > 0
+                ? ColorId.ContainsItemsEnabled.Vector
+                : ImGuiColor.Text.Vector
+            : count > 0
+                ? ColorId.ContainsItemsDisabled.Vector
+                : ImGuiColor.TextDisabled.Vector;
+
+        public readonly bool DifferingNames = string.Equals(mod.Name, mod.Identifier, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    public StringPair        SelectionName { get; private set; } = new("选择新模组...", new StringU8("选择新模组..."u8));
+    public string            Selection     { get; private set; } = string.Empty;
+    public SettingPresetData Settings      { get; private set; } = SettingPresetData.Empty;
+
+    public bool Draw(Utf8StringHandler<LabelStringHandlerBuffer> label, float previewWidth)
+    {
+        if (!Draw(label, SelectionName.Utf8, StringU8.Empty, previewWidth, out var newItem))
+            return false;
+
+        SelectionName = newItem.Name;
+        Selection     = newItem.Directory.Utf16;
+        Settings      = newItem.Settings;
+        return true;
+    }
+
+    protected override float ItemHeight
+        => Im.Style.TextHeightWithSpacing;
+
+    protected override IEnumerable<CacheItem> GetItems()
+        => penumbra.GetMods(fileSystem.Selection.Selection?.GetValue<Design>()?.FilteredItemNames.ToArray() ?? []).Select(t => new CacheItem(t.Mod, t.Settings, t.Count));
+
+    protected override bool DrawItem(in CacheItem item, int globalIndex, bool selected)
+    {
+        bool ret;
+        using (ImGuiColor.Text.Push(item.Color))
+        {
+            ret = Im.Selectable(item.Name.Utf8, selected);
+        }
+
+        if (Im.Item.Hovered())
+            DrawTooltip(item);
+
+        return ret;
+    }
+
+    private static void DrawTooltip(in CacheItem item)
+    {
+        using var style = ImStyleSingle.PopupBorderThickness.Push(2 * Im.Style.GlobalScale);
+        using var tt    = Im.Tooltip.Begin();
+
+        Im.Dummy(ImEx.ScaledVectorX(300));
+        using (Im.Group())
+        {
+            if (item.DifferingNames)
+                Im.Text("目录名称"u8);
+            Im.Text("启用"u8);
+            Im.Text("优先级"u8);
+            Im.Text("影响的设计物品"u8);
+            DrawSettingsLeft(item.Settings);
+        }
+
+        Im.Line.Same(Math.Max(Im.Item.Size.X + 3 * Im.Style.ItemSpacing.X, 150 * Im.Style.GlobalScale));
+        using (Im.Group())
+        {
+            if (item.DifferingNames)
+                Im.Text(item.Directory.Utf8);
+            Im.Text($"{item.Settings.State is ModState.Enabled}");
+            Im.Text($"{item.Settings.Priority}");
+            Im.Text($"{item.Count}");
+            DrawSettingsRight(item.Settings);
+        }
+    }
+
+    public static void DrawSettingsLeft(in SettingPresetData settings)
+    {
+        foreach (var (group, data) in settings.Settings)
+        {
+            Im.Text(group.Name ?? group.Identifier.ToString());
+            // TODO presets
+        }
+    }
+
+    public static void DrawSettingsRight(in SettingPresetData settings)
+    {
+        foreach (var (_, data) in settings.Settings)
+        {
+            var enabled = data.Enabled().Select(o => o.Name ?? o.Identifier.ToString()).ToArray();
+            if (enabled.Length is 0)
+                Im.Text("未启用"u8);
+            else
+                Im.Text(string.Join(", ", enabled));
+        }
+    }
+
+    protected override bool IsSelected(CacheItem item, int globalIndex)
+        => Selection.Equals(item.Directory.Utf16, StringComparison.OrdinalIgnoreCase);
+
+    private sealed class ModFilter : TextFilterBase<CacheItem>
+    {
+        public override bool WouldBeVisible(in CacheItem item, int globalIndex)
+            => base.WouldBeVisible(in item, globalIndex) || WouldBeVisible(item.Directory.Utf16);
+
+        protected override string ToFilterString(in CacheItem item, int globalIndex)
+            => item.Name.Utf16;
+    }
+}

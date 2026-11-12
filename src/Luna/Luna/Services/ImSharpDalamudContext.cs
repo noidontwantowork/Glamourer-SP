@@ -1,0 +1,256 @@
+using Dalamud.Interface;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using ImSharp.ImNodes;
+using Luna.DirectX;
+using Microsoft.Extensions.Logging;
+
+namespace Luna;
+
+/// <summary> A helper class for sharing a single <see cref="ImSharpContext"/> across multiple instances of ImSharp or Luna through Dalamud IPC. </summary>
+public sealed unsafe class ImSharpDalamudContext : IRequiredService, IDisposable
+{
+    public static Im.Native.ImFont* AwesomeFont { get; private set; } = null;
+
+    public static Im.Native.ImFont* MonoFont
+    {
+        get => (Im.Native.ImFont*)ImSharpConfiguration.Context->MonoFont;
+        private set => ImSharpConfiguration.Context->MonoFont = value;
+    }
+
+    public static Im.Native.ImFont* DefaultFont
+    {
+        get => (Im.Native.ImFont*)ImSharpConfiguration.Context->DefaultFont;
+        private set => ImSharpConfiguration.Context->DefaultFont = value;
+    }
+
+    private readonly string                  _contextTag;
+    private readonly IUiBuilder              _uiBuilder;
+    private readonly IDalamudPluginInterface _pluginInterface;
+
+    /// <summary> Invoked whenever the default style or colors change. </summary>
+    public static event Action? StyleChanged;
+
+    /// <summary> Invoked whenever the default font or scale changes. </summary>
+    public static event Action? FontChanged;
+
+    /// <summary>
+    ///   Creates an <see cref="ImSharpContext"/> and shares it through Dalamud's shared data store. <br/>
+    ///   Sets up the logger for this instance of Luna. <br/>
+    ///   Sets up <see cref="ImSharpPerFrame.OnUpdate"/> to be called on Dalamud's Draw.
+    /// </summary>
+    /// <param name="pluginInterface"> The plugin interface for the shared data store. </param>
+    /// <param name="uiBuilder"> The uiBuilder to set up the <see cref="ImSharpPerFrame.OnUpdate"/> and fetch the <see cref="IUiBuilder.FontMono"/> when it is ready. </param>
+    /// <param name="framework"> The framework to ensure the <see cref="IUiBuilder.FontMono"/> is fetched from the main thread. </param>
+    /// <param name="logger"> The logger to set up for ImSharp. </param>
+    public ImSharpDalamudContext(IDalamudPluginInterface pluginInterface, IUiBuilder uiBuilder, IFramework framework, ILogger logger)
+    {
+        _contextTag      = $"ImSharp.Context.V{ImSharpContext.CurrentVersion}";
+        _pluginInterface = pluginInterface;
+        _uiBuilder       = uiBuilder;
+
+        ImSharpConfiguration.SetLogger(logger);
+
+        var dxDevice = uiBuilder.DeviceHandle;
+        if (dxDevice is not 0)
+            CustomRenderManager.Instance.SetDevice(dxDevice);
+        else
+            _uiBuilder.Draw += SetupDevice;
+
+        // Set up the default cache manager.
+        _uiBuilder.DefaultFontChanged        += OnDefaultFontChanged;
+        _uiBuilder.DefaultGlobalScaleChanged += OnDefaultGlobalScaleChanged;
+        _uiBuilder.DefaultStyleChanged       += OnDefaultStyleChanged;
+
+        _uiBuilder.Draw        += ImSharpPerFrame.OnUpdate;
+        ImSharpPerFrame.Update += OnFrameworkUpdate;
+        var created = false;
+        var holder = pluginInterface.GetOrCreateData(_contextTag, IReadOnlyList<nint> () =>
+        {
+            created = true;
+            return new ContextHolder(uiBuilder, framework);
+        });
+        var context = (ImSharpContext*)holder[0];
+        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+        if (created)
+            logger.LogDebug("Created new ImSharp Context at 0x{Context:X} with tag {Tag:l}.", (nint)context, _contextTag);
+        else
+            logger.LogDebug("Shared existing ImSharp Context at 0x{Context:X} with tag {Tag:l}.", (nint)context, _contextTag);
+        framework.RunOnTick(() => ImSharpConfiguration.SetContext(context, false));
+    }
+
+    /// <summary> Clear all ImSharp configuration data and relinquish the context from Dalamud's data store.  </summary>
+    public void Dispose()
+    {
+        _uiBuilder.DefaultFontChanged        -= OnDefaultFontChanged;
+        _uiBuilder.DefaultGlobalScaleChanged -= OnDefaultGlobalScaleChanged;
+        _uiBuilder.DefaultStyleChanged       -= OnDefaultStyleChanged;
+        ImSharpPerFrame.Update               -= OnFrameworkUpdate;
+        ImSharpConfiguration.SetContext(null, true);
+        ImSharpConfiguration.SetLogger(null);
+        _pluginInterface.RelinquishData(_contextTag);
+        _uiBuilder.Draw -= ImSharpPerFrame.OnUpdate;
+        _uiBuilder.Draw -= SetupDevice;
+    }
+
+    private void SetupDevice()
+    {
+        var dxDevice = _uiBuilder.DeviceHandle;
+        if (dxDevice is 0)
+            return;
+
+        CustomRenderManager.Instance.SetDevice(dxDevice);
+        _uiBuilder.Draw -= SetupDevice;
+    }
+
+    /// <summary> Draw debug information about the currently configured <see cref="ImSharpContext"/>. </summary>
+    /// <param name="dynamisIpc"> If this is set, draw pointers using Dynamis. </param>
+    public void DrawDebugInfo(DynamisIpc? dynamisIpc = null)
+    {
+        using var id    = Im.Id.Push("ImSharpContext"u8);
+        using var table = Im.Table.Begin("table"u8, 2, TableFlags.SizingFixedFit);
+        if (!table)
+            return;
+
+        table.DrawColumn("Library Version"u8);
+        table.DrawColumn($"{ImSharpContext.CurrentVersion}");
+
+        table.DrawColumn("Tag"u8);
+        table.DrawColumn(_contextTag);
+
+        table.DrawColumn("ImSharp Context"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context);
+        if (ImSharpConfiguration.Context is null)
+            return;
+
+        table.DrawColumn("Version"u8);
+        table.DrawColumn($"{ImSharpConfiguration.Context->Version}");
+
+        table.DrawColumn("Text Buffer"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->TextBuffer);
+        table.DrawColumn("Text Buffer Size"u8);
+        table.DrawColumn($"{ImSharpConfiguration.Context->TextBufferSize}");
+
+        table.DrawColumn("Label Buffer"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->LabelBuffer);
+        table.DrawColumn("Label Buffer Size"u8);
+        table.DrawColumn($"{ImSharpConfiguration.Context->LabelBufferSize}");
+
+        table.DrawColumn("Hint Buffer"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->HintBuffer);
+        table.DrawColumn("Hint Buffer Size"u8);
+        table.DrawColumn($"{ImSharpConfiguration.Context->HintBufferSize}");
+
+        table.DrawColumn("Input Buffer"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->InputBuffer);
+        table.DrawColumn("Input Buffer Size"u8);
+        table.DrawColumn($"{ImSharpConfiguration.Context->InputBufferSize}");
+
+        table.DrawColumn("ImGui Context"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->ImGuiContext);
+
+        table.DrawColumn("MonoFont"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->MonoFont);
+
+        table.DrawColumn("DefaultFont"u8);
+        table.NextColumn();
+        dynamisIpc.DrawPointerChecked(ImSharpConfiguration.Context->DefaultFont);
+    }
+
+    /// <summary> A utility class that can be shared through Dalamud's data store. </summary>
+    /// <remarks>
+    ///   We need to hack here a little bit because the data store can only share known types and only reference-types.
+    ///   So this is IDisposable so that Dalamud tears down the context when all consumers relinquish their claim.
+    ///   And it is a list of generic pointers so we can access the single element we need which is otherwise of unknown type, and cast it.
+    /// </remarks>
+    private sealed class ContextHolder : IDisposable, IReadOnlyList<nint>
+    {
+        private nint _context = (nint)ImSharpContext.SetupDefault();
+
+        public ContextHolder(IUiBuilder uiBuilder, IFramework framework)
+        {
+            uiBuilder.WaitForUi().ContinueWith(_ => framework.RunOnFrameworkThread(() =>
+            {
+                var sharp = (ImSharpContext*)_context;
+                if (sharp is null)
+                    return;
+
+                sharp->MonoFont    = uiBuilder.FontMono.Handle;
+                sharp->DefaultFont = uiBuilder.FontDefault.Handle;
+
+                if (sharp->ImGuiContext is null)
+                    sharp->ImGuiContext = Im.ImGuiContext.Get().Pointer;
+
+                var gui = (Im.Native.Internal.Context*)sharp->ImGuiContext;
+                if (gui is null)
+                    return;
+
+                var nodes = (Internal.NodesContext*)sharp->ImNodesContext;
+                if (nodes is not null)
+                    nodes->Io.LinkDetachWithModifierClick = &gui->Io.KeyAlt;
+            }).Wait());
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            if (_context == nint.Zero)
+                return;
+
+            ImSharpContext.TearDownDefault((ImSharpContext*)_context);
+            ImSharpConfiguration.Logger.LogDebug("Teared down ImSharp context at 0x{Context:X}.", _context);
+            _context = nint.Zero;
+        }
+
+        ~ContextHolder()
+            => Dispose();
+
+        public IEnumerator<nint> GetEnumerator()
+        {
+            if (_context != nint.Zero)
+                yield return _context;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
+
+        public int Count
+            => _context == nint.Zero ? 0 : 1;
+
+        public IntPtr this[int index]
+            => index is 0 && _context != nint.Zero ? _context : throw new IndexOutOfRangeException();
+    }
+
+    private static void OnDefaultStyleChanged()
+    {
+        CacheManager.Instance.SetStyleDirty();
+        CacheManager.Instance.SetColorsDirty();
+        StyleChanged?.Invoke();
+    }
+
+    private static void OnDefaultGlobalScaleChanged()
+    {
+        CacheManager.Instance.SetFontDirty();
+        FontChanged?.Invoke();
+    }
+
+    private static void OnDefaultFontChanged()
+    {
+        CacheManager.Instance.SetFontDirty();
+        FontChanged?.Invoke();
+    }
+
+    private void OnFrameworkUpdate()
+    {
+        MonoFont    = _uiBuilder.FontMono.IsLoaded() ? (Im.Native.ImFont*)_uiBuilder.FontMono.Handle : null;
+        DefaultFont = _uiBuilder.FontDefault.IsLoaded() ? (Im.Native.ImFont*)_uiBuilder.FontDefault.Handle : null;
+        AwesomeFont = _uiBuilder.FontIcon.IsLoaded() ? (Im.Native.ImFont*)_uiBuilder.FontIconFixedWidth.Handle : null;
+    }
+}

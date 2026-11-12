@@ -1,0 +1,244 @@
+using System.Text.Json;
+using Dalamud.Game.ClientState.Objects.Enums;
+using ImSharp;
+using Luna;
+using Newtonsoft.Json.Linq;
+using Penumbra.GameData.Enums;
+using Penumbra.String;
+
+namespace Penumbra.GameData.Actors;
+
+/// <summary> Extension methods to convert an actor identifier to and from JSON. </summary>
+public static class ActorIdentifierJson
+{
+    /// <summary> Write an actor identifier to a new JObject. </summary>
+    public static JObject ToJson(this ActorIdentifier identifier)
+    {
+        var ret = new JObject { { nameof(identifier.Type), identifier.Type.ToString() } };
+        switch (identifier.Type)
+        {
+            case IdentifierType.Player:
+                ret.Add(nameof(identifier.PlayerName), identifier.PlayerName.ToString());
+                ret.Add(nameof(identifier.HomeWorld),  identifier.HomeWorld.Id);
+                return ret;
+            case IdentifierType.Retainer:
+                ret.Add(nameof(identifier.PlayerName), identifier.PlayerName.ToString());
+                ret.Add(nameof(identifier.Retainer),   identifier.Retainer.ToString());
+                return ret;
+            case IdentifierType.Owned:
+                ret.Add(nameof(identifier.PlayerName), identifier.PlayerName.ToString());
+                ret.Add(nameof(identifier.HomeWorld),  identifier.HomeWorld.Id);
+                ret.Add(nameof(identifier.Kind),       identifier.Kind.ToString());
+                ret.Add(nameof(identifier.DataId),     identifier.DataId.Id);
+                return ret;
+            case IdentifierType.Special:
+                ret.Add("Special", ((ScreenActor)identifier.Index.Index).ToString());
+                return ret;
+            case IdentifierType.Npc:
+                ret.Add(nameof(identifier.Kind), identifier.Kind.ToString());
+                if (identifier.Index.Index != ushort.MaxValue)
+                    ret.Add(nameof(identifier.Index), identifier.Index.Index);
+                ret.Add(nameof(identifier.DataId), identifier.DataId.Id);
+                return ret;
+            case IdentifierType.UnkObject:
+                ret.Add(nameof(identifier.PlayerName), identifier.PlayerName.ToString());
+                ret.Add(nameof(identifier.Index),      identifier.Index.Index);
+                return ret;
+        }
+
+        return ret;
+    }
+
+    /// <summary> Write this identifier as a JSON object to the writer. </summary>
+    public static void WriteJson(this Utf8JsonWriter writer, ReadOnlySpan<byte> property, ActorIdentifier identifier)
+    {
+        writer.WriteStartObject(property);
+        writer.WriteJsonProperties(identifier);
+        writer.WriteEndObject();
+    }
+
+    /// <summary> Write the properties of this identifier to the JSON writer. </summary>
+    public static void WriteJsonProperties(this Utf8JsonWriter writer, ActorIdentifier identifier)
+    {
+        writer.WriteString("Type"u8, identifier.Type.ToString());
+        switch (identifier.Type)
+        {
+            case IdentifierType.Player:
+                writer.WriteString("PlayerName"u8, identifier.PlayerName.Span);
+                writer.WriteNumber("HomeWorld"u8, identifier.HomeWorld);
+                return;
+            case IdentifierType.Retainer:
+                writer.WriteString("PlayerName"u8, identifier.PlayerName.Span);
+                writer.WriteString("Retainer"u8,   identifier.Retainer.ToString());
+                return;
+            case IdentifierType.Owned:
+                writer.WriteString("PlayerName"u8, identifier.PlayerName.Span);
+                writer.WriteNumber("HomeWorld"u8, identifier.HomeWorld);
+                writer.WriteString("Kind"u8, identifier.Kind.ToString());
+                writer.WriteNumber("DataId"u8, identifier.DataId);
+                return;
+            case IdentifierType.Special:
+                writer.WriteString("Special"u8, ((ScreenActor)identifier.Index.Index).ToString());
+                return;
+            case IdentifierType.Npc:
+                writer.WriteString("Kind"u8, identifier.Kind.ToString());
+                writer.WriteUnsignedIfNot("Index"u8, identifier.Index.Index, ushort.MaxValue);
+                writer.WriteNumber("DataId"u8, identifier.DataId);
+                return;
+            case IdentifierType.UnkObject:
+                writer.WriteString("PlayerName"u8, identifier.PlayerName.Span);
+                writer.WriteNumber("Index"u8, identifier.Index.Index);
+                return;
+        }
+    }
+
+    /// <summary>
+    /// Try to create an ActorIdentifier from an already parsed JObject <paramref name="data"/>.
+    /// </summary>
+    /// <param name="actorManager"> The actor manager using it. </param>
+    /// <param name="data">A parsed JObject</param>
+    /// <returns>ActorIdentifier.Invalid if the JObject can not be converted, a valid ActorIdentifier otherwise.</returns>
+    public static ActorIdentifier FromJson(this ActorIdentifierFactory actorManager, JObject? data)
+    {
+        if (data is null)
+            return ActorIdentifier.Invalid;
+
+        var type = data[nameof(ActorIdentifier.Type)]?.ToObject<IdentifierType>() ?? IdentifierType.Invalid;
+        switch (type)
+        {
+            case IdentifierType.Player:
+            {
+                var name      = ByteString.FromStringUnsafe(data[nameof(ActorIdentifier.PlayerName)]?.ToObject<string>(), false);
+                var homeWorld = data[nameof(ActorIdentifier.HomeWorld)]?.ToObject<ushort>() ?? 0;
+                return actorManager.CreatePlayer(name, homeWorld);
+            }
+            case IdentifierType.Retainer:
+            {
+                var name = ByteString.FromStringUnsafe(data[nameof(ActorIdentifier.PlayerName)]?.ToObject<string>(), false);
+                var retainerType = data[nameof(ActorIdentifier.Retainer)]?.ToObject<ActorIdentifier.RetainerType>()
+                 ?? ActorIdentifier.RetainerType.Both;
+                return actorManager.CreateRetainer(name, retainerType);
+            }
+            case IdentifierType.Owned:
+            {
+                var name      = ByteString.FromStringUnsafe(data[nameof(ActorIdentifier.PlayerName)]?.ToObject<string>(), false);
+                var homeWorld = data[nameof(ActorIdentifier.HomeWorld)]?.ToObject<ushort>() ?? 0;
+                var kind      = data[nameof(ActorIdentifier.Kind)].GetObjectKind();
+                var dataId    = data[nameof(ActorIdentifier.DataId)]?.ToObject<uint>() ?? 0;
+                return actorManager.CreateOwned(name, homeWorld, kind, dataId);
+            }
+            case IdentifierType.Special:
+            {
+                var special = data["Special"]?.ToObject<ScreenActor>() ?? 0;
+                return actorManager.CreateSpecial(special);
+            }
+            case IdentifierType.Npc:
+            {
+                var index  = data[nameof(ActorIdentifier.Index)]?.ToObject<ushort>() ?? ushort.MaxValue;
+                var kind   = data[nameof(ActorIdentifier.Kind)].GetObjectKind();
+                var dataId = data[nameof(ActorIdentifier.DataId)]?.ToObject<uint>() ?? 0;
+                return actorManager.CreateNpc(kind, dataId, index);
+            }
+            case IdentifierType.UnkObject:
+            {
+                var index = data[nameof(ActorIdentifier.Index)]?.ToObject<ushort>() ?? ushort.MaxValue;
+                var name  = ByteString.FromStringUnsafe(data[nameof(ActorIdentifier.PlayerName)]?.ToObject<string>(), false);
+                return actorManager.CreateIndividualUnchecked(IdentifierType.UnkObject, name, index, ObjectKind.None, 0);
+            }
+            default: return ActorIdentifier.Invalid;
+        }
+    }
+
+    /// <summary>
+    /// Try to create an ActorIdentifier from an already parsed JObject <paramref name="data"/>.
+    /// </summary>
+    /// <param name="actorManager"> The actor manager using it. </param>
+    /// <param name="data">A parsed JObject</param>
+    /// <returns>ActorIdentifier.Invalid if the JObject can not be converted, a valid ActorIdentifier otherwise.</returns>
+    public static ActorIdentifier FromJson(this ActorIdentifierFactory actorManager, in JsonElement? data)
+    {
+        if (data is not { ValueKind: JsonValueKind.Object } j)
+            return ActorIdentifier.Invalid;
+
+        var type = j.EnumOrDefault("Type"u8, IdentifierType.Invalid);
+        switch (type)
+        {
+            case IdentifierType.Player:
+            {
+                var name      = ByteString.FromStringUnsafe(j.PropertyOrDefault("PlayerName"u8, string.Empty), false);
+                var homeWorld = j.PropertyOrDefault("HomeWorld"u8, (ushort)0);
+                return actorManager.CreatePlayer(name, homeWorld);
+            }
+            case IdentifierType.Retainer:
+            {
+                var name         = ByteString.FromStringUnsafe(j.PropertyOrDefault("PlayerName"u8, string.Empty), false);
+                var retainerType = j.EnumOrDefault("Retainer"u8, ActorIdentifier.RetainerType.Both);
+                return actorManager.CreateRetainer(name, retainerType);
+            }
+            case IdentifierType.Owned:
+            {
+                var name      = ByteString.FromStringUnsafe(j.PropertyOrDefault("PlayerName"u8, string.Empty), false);
+                var homeWorld = j.PropertyOrDefault("HomeWorld"u8, (ushort)0);
+                var kind      = j.GetObjectKind();
+                var dataId    = j.PropertyOrDefault("DataId"u8, 0u);
+                return actorManager.CreateOwned(name, homeWorld, kind, dataId);
+            }
+            case IdentifierType.Special:
+            {
+                var special = j.EnumOrDefault("Special"u8, (ScreenActor)0);
+                return actorManager.CreateSpecial(special);
+            }
+            case IdentifierType.Npc:
+            {
+                var index  = j.PropertyOrDefault("Index"u8, ushort.MaxValue);
+                var kind   = j.GetObjectKind();
+                var dataId = j.PropertyOrDefault("DataId"u8, 0u);
+                return actorManager.CreateNpc(kind, dataId, index);
+            }
+            case IdentifierType.UnkObject:
+            {
+                var index = j.PropertyOrDefault("Index"u8, ushort.MaxValue);
+                var name  = ByteString.FromStringUnsafe(j.PropertyOrDefault("PlayerName"u8, string.Empty), false);
+                return actorManager.CreateIndividualUnchecked(IdentifierType.UnkObject, name, index, ObjectKind.None, 0);
+            }
+            default: return ActorIdentifier.Invalid;
+        }
+    }
+
+    private static ObjectKind GetObjectKind(this JToken? token)
+    {
+        if (token is null)
+            return ObjectKind.CardStand;
+
+        if (token.ToObject<string>() is { } text)
+        {
+            // Migration.
+            if (text is "MountType")
+                return ObjectKind.Mount;
+
+            if (ObjectKind.Parse(text, out var e))
+                return e;
+        }
+
+        return token.ToObject<ObjectKind>();
+    }
+
+    private static ObjectKind GetObjectKind(this JsonElement parent)
+    {
+        if (!parent.TryGetProperty("Kind"u8, out var value))
+            return ObjectKind.CardStand;
+
+        if (value.ValueKind is JsonValueKind.String)
+        {
+            var text = value.GetString() ?? string.Empty;
+            // Migration.
+            if (text is "MountType")
+                return ObjectKind.Mount;
+
+            if (ObjectKind.Parse(text, out var e))
+                return e;
+        }
+
+        return parent.EnumOrDefault("Kind"u8, ObjectKind.CardStand);
+    }
+}

@@ -1,0 +1,181 @@
+using Dalamud.Plugin;
+using Dalamud.Plugin.Ipc;
+using Luna;
+using Penumbra.Api.Api;
+using Penumbra.Api.Enums;
+
+namespace Penumbra.Api.IpcSubscribers;
+
+/// <inheritdoc cref="IPenumbraApiGameState.GetGameStateAdapter"/>
+internal sealed class GetGameStateAdapter(IDalamudPluginInterface pi)
+    : FuncSubscriber<IIdDataShareAdapter>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetGameStateAdapter)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetGameStateAdapter"u8;
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<IIdDataShareAdapter> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, api.GetGameStateAdapter);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.GetDrawObjectInfo"/>
+public sealed class GetDrawObjectInfo(IDalamudPluginInterface pi)
+    : FuncSubscriber<nint, (nint, (Guid, string))>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetDrawObjectInfo)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetDrawObjectInfo.V5"u8;
+
+    /// <inheritdoc cref="IPenumbraApiGameState.GetDrawObjectInfo"/>
+    public (nint GameObject, (Guid Id, string Name) AssociatedCollection) Invoke(nint drawObjectAddress)
+        => base.Invoke(drawObjectAddress);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<nint, (nint, (Guid, string))> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, api.GetDrawObjectInfo);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.GetCutsceneParentIndex"/>
+public sealed class GetCutsceneParentIndex(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCutsceneParentIndex)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCutsceneParentIndex"u8;
+
+    /// <inheritdoc cref="IPenumbraApiGameState.GetCutsceneParentIndex"/>
+    public int Invoke(int actorIndex)
+        => base.Invoke(actorIndex);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, int> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, api.GetCutsceneParentIndex);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.SetCutsceneParentIndex"/>
+public sealed class SetCutsceneParentIndex(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, int, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(SetCutsceneParentIndex)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.SetCutsceneParentIndex.V5"u8;
+
+    /// <inheritdoc cref="IPenumbraApiGameState.SetCutsceneParentIndex"/>
+    public PenumbraApiEc Invoke(int copyIdx, int newParentIdx)
+        => (PenumbraApiEc)base.Invoke(copyIdx, newParentIdx);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, int, int> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, (a, b) => (int)api.SetCutsceneParentIndex(a, b));
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.CreatingCharacterBase"/>
+public static class CreatingCharacterBase
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(CreatingCharacterBase)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.CreatingCharacterBase.V5"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint, Guid, nint, nint, nint> Subscriber(IDalamudPluginInterface pi,
+        params Action<nint, Guid, nint, nint, nint>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint, Guid, nint, nint, nint> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, t => api.CreatingCharacterBase += t.Invoke, t => api.CreatingCharacterBase -= t.Invoke);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.CreatedCharacterBase"/>
+public static class CreatedCharacterBase
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(CreatedCharacterBase)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.CreatedCharacterBase.V5"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint, Guid, nint> Subscriber(IDalamudPluginInterface pi, params Action<nint, Guid, nint>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint, Guid, nint> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, t => api.CreatedCharacterBase += t.Invoke, t => api.CreatedCharacterBase -= t.Invoke);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.GameObjectResourceResolved"/>
+public static class GameObjectResourcePathResolved
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GameObjectResourcePathResolved)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GameObjectResourcePathResolved"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint, string, string> Subscriber(IDalamudPluginInterface pi, params Action<nint, string, string>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint, string, string> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, t => api.GameObjectResourceResolved += t.Invoke, t => api.GameObjectResourceResolved -= t.Invoke);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.GetCutsceneParentIndexFunc"/>
+public sealed class GetCutsceneParentIndexFunc(IDalamudPluginInterface pi)
+    : FuncSubscriber<Func<int, int>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCutsceneParentIndexFunc)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCutsceneParentIndexFunc"u8;
+
+    /// <inheritdoc cref="GetCutsceneParentIndexFunc"/>
+    public new Func<int, int> Invoke()
+        => base.Invoke();
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<Func<int, int>> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, api.GetCutsceneParentIndexFunc);
+}
+
+/// <inheritdoc cref="IPenumbraApiGameState.GetGameObjectFromDrawObjectFunc"/>
+public sealed class GetGameObjectFromDrawObjectFunc(IDalamudPluginInterface pi)
+    : FuncSubscriber<Func<nint, nint>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetGameObjectFromDrawObjectFunc)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetGameObjectFromDrawObjectFunc"u8;
+
+    /// <inheritdoc cref="GetGameObjectFromDrawObjectFunc"/>
+    public new Func<nint, nint> Invoke()
+        => base.Invoke();
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<Func<nint, nint>> Provider(IDalamudPluginInterface pi, IPenumbraApiGameState api)
+        => new(pi, Label, api.GetGameObjectFromDrawObjectFunc);
+}

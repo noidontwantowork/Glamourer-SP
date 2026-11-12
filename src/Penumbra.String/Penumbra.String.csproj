@@ -1,0 +1,31 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+    <PropertyGroup>
+        <AssemblyTitle>ByteString</AssemblyTitle>
+        <Copyright>Copyright © 2025</Copyright>
+        <FileVersion>1.0.0.0</FileVersion>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <PackageVersion>1.0.8</PackageVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Use_DalamudPackager>false</Use_DalamudPackager>
+        <Use_Dalamud_ImGui>false</Use_Dalamud_ImGui>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Title>Penumbra.String</Title>
+        <Authors>Ottermandias</Authors>
+        <RepositoryUrl>https://github.com/Ottermandias/Penumbra.String</RepositoryUrl>
+        <Description>Auxiliary functions for dealing with owned or unowned byte strings when working with Final Fantasy XIV.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,128 @@
+﻿using ImSharp;
+using Luna.Generators;
+
+namespace Penumbra.GameData.Enums;
+
+/// <summary> Flags for all theoretically available crest positions. </summary>
+[Flags]
+[NamedEnum("ToLabel")]
+[TooltipEnum]
+public enum CrestFlag : ushort
+{
+    [Name("盾牌")]
+    [Tooltip("盾牌纹章")]
+    OffHand = 0x0001,
+
+    [Name("头部")]
+    [Tooltip("头部纹章")]
+    Head = 0x0002,
+
+    [Name("身体")]
+    [Tooltip("身体纹章")]
+    Body = 0x0004,
+
+    [Name("手套")]
+    [Tooltip("手套纹章")]
+    Hands = 0x0008,
+
+    [Name("裤子")]
+    [Tooltip("裤子纹章")]
+    Legs = 0x0010,
+
+    [Name("靴子")]
+    [Tooltip("靴子纹章")]
+    Feet = 0x0020,
+
+    [Name("耳环")]
+    [Tooltip("耳环纹章")]
+    Ears = 0x0040,
+
+    [Name("项链")]
+    [Tooltip("项链纹章")]
+    Neck = 0x0080,
+
+    [Name("手镯")]
+    [Tooltip("手镯纹章")]
+    Wrists = 0x0100,
+
+    [Name("右戒指")]
+    [Tooltip("右戒指纹章")]
+    RFinger = 0x0200,
+
+    [Name("左戒指")]
+    [Tooltip("左戒指纹章")]
+    LFinger = 0x0400,
+
+    [Name("武器")]
+    [Tooltip("武器纹章")]
+    MainHand = 0x0800,
+}
+
+/// <summary> Crests can be applied to different draw objects for the character themselves or their weapons. </summary>
+public enum CrestType : byte
+{
+    None,
+    Human,
+    Mainhand,
+    Offhand,
+};
+
+public static class CrestExtensions
+{
+    /// <summary> All theoretically possible crest flags. </summary>
+    public const CrestFlag All = (CrestFlag)(((ulong)EquipFlag.Mainhand << 1) - 1);
+
+    /// <summary> All crest flags actually in use by the game. </summary>
+    public const CrestFlag AllRelevant = CrestFlag.Head | CrestFlag.Body | CrestFlag.OffHand;
+
+    /// <summary> A set of the crest flags in use by the game. </summary>
+    public static readonly IReadOnlyList<CrestFlag> AllRelevantSet = CrestFlag.Values.Where(f => AllRelevant.HasFlag(f)).ToArray();
+
+    /// <summary> An internally used index that assigns consecutive numbers to the crest flags in use. </summary>
+    public static int ToInternalIndex(this CrestFlag flag)
+        => flag switch
+        {
+            CrestFlag.Head    => 0,
+            CrestFlag.Body    => 1,
+            CrestFlag.OffHand => 2,
+            _                 => -1,
+        };
+
+    /// <summary> Get the index and type used in game data for specific crest flags. </summary>
+    public static (CrestType Type, byte Index) ToIndex(this CrestFlag flag)
+        => flag switch
+        {
+            CrestFlag.Head     => (CrestType.Human, 0),
+            CrestFlag.Body     => (CrestType.Human, 1),
+            CrestFlag.Hands    => (CrestType.Human, 2),
+            CrestFlag.Legs     => (CrestType.Human, 3),
+            CrestFlag.Feet     => (CrestType.Human, 4),
+            CrestFlag.Ears     => (CrestType.None, 0),
+            CrestFlag.Neck     => (CrestType.None, 0),
+            CrestFlag.Wrists   => (CrestType.None, 0),
+            CrestFlag.RFinger  => (CrestType.None, 0),
+            CrestFlag.LFinger  => (CrestType.None, 0),
+            CrestFlag.MainHand => (CrestType.None, 0),
+            CrestFlag.OffHand  => (CrestType.Offhand, 0),
+            _                  => (CrestType.None, 0),
+        };
+
+    /// <summary> Get the crest flag corresponding to a specific equip slot. </summary>
+    public static CrestFlag ToCrestFlag(this EquipSlot slot)
+        => slot switch
+        {
+            EquipSlot.MainHand => CrestFlag.MainHand,
+            EquipSlot.OffHand  => CrestFlag.OffHand,
+            EquipSlot.Head     => CrestFlag.Head,
+            EquipSlot.Body     => CrestFlag.Body,
+            EquipSlot.Hands    => CrestFlag.Hands,
+            EquipSlot.Legs     => CrestFlag.Legs,
+            EquipSlot.Feet     => CrestFlag.Feet,
+            EquipSlot.Ears     => CrestFlag.Ears,
+            EquipSlot.Neck     => CrestFlag.Neck,
+            EquipSlot.Wrists   => CrestFlag.Wrists,
+            EquipSlot.RFinger  => CrestFlag.RFinger,
+            EquipSlot.LFinger  => CrestFlag.LFinger,
+            _                  => 0,
+        };
+}

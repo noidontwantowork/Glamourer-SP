@@ -1,0 +1,482 @@
+﻿using Dalamud.Plugin;
+using Glamourer.Api.Api;
+using Glamourer.Api.Enums;
+using Luna;
+using Newtonsoft.Json.Linq;
+
+namespace Glamourer.Api.IpcSubscribers;
+
+/// <inheritdoc cref="IGlamourerApiState.GetState"/>
+public sealed class GetState(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, (int, JObject?)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(GetState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.GetState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.GetState"/>
+    public (GlamourerApiEc, JObject?) Invoke(int objectIndex, uint key = 0)
+    {
+        var (ec, data) = base.Invoke(objectIndex, key);
+        return ((GlamourerApiEc)ec, data);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, (int, JObject?)> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b) =>
+        {
+            var (ec, data) = api.GetState(a, b);
+            return ((int)ec, data);
+        });
+}
+
+/// <inheritdoc cref="IGlamourerApiState.GetStateName"/>
+public sealed class GetStateName(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, (int, JObject?)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(GetStateName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.GetStateName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.GetStateName"/>
+    public (GlamourerApiEc, JObject?) Invoke(string objectName, uint key = 0)
+    {
+        var (ec, data) = base.Invoke(objectName, key);
+        return ((GlamourerApiEc)ec, data);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, (int, JObject?)> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (i, k) =>
+        {
+            var (ec, data) = api.GetStateName(i, k);
+            return ((int)ec, data);
+        });
+}
+
+/// <inheritdoc cref="IGlamourerApiState.GetStateBase64"/>
+public sealed class GetStateBase64(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, (int, string?)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(GetStateBase64)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.GetStateBase64"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.GetStateBase64"/>
+    public (GlamourerApiEc, string?) Invoke(int objectIndex, uint key = 0)
+    {
+        var (ec, data) = base.Invoke(objectIndex, key);
+        return ((GlamourerApiEc)ec, data);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, (int, string?)> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b) =>
+        {
+            var (ec, data) = api.GetStateBase64(a, b);
+            return ((int)ec, data);
+        });
+}
+
+/// <inheritdoc cref="IGlamourerApiState.GetStateBase64Name"/>
+public sealed class GetStateBase64Name(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, (int, string?)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(GetStateBase64Name)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.GetStateBase64Name"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.GetStateBase64Name"/>
+    public (GlamourerApiEc, string?) Invoke(string objectName, uint key = 0)
+    {
+        var (ec, data) = base.Invoke(objectName, key);
+        return ((GlamourerApiEc)ec, data);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, (int, string?)> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (i, k) =>
+        {
+            var (ec, data) = api.GetStateBase64Name(i, k);
+            return ((int)ec, data);
+        });
+}
+
+/// <inheritdoc cref="IGlamourerApiState.ApplyState"/>
+public sealed class ApplyState(IDalamudPluginInterface pi)
+    : FuncSubscriber<object, int, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(ApplyState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.ApplyState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.ApplyState"/>
+    public GlamourerApiEc Invoke(JObject state, int objectIndex, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(state, objectIndex, key, (ulong)flags);
+
+    /// <inheritdoc cref="IGlamourerApiState.ApplyState"/>
+    public GlamourerApiEc Invoke(string base64State, int objectIndex, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(base64State, objectIndex, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<object, int, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c, d) => (int)api.ApplyState(a, b, c, (ApplyFlag)d));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.ApplyStateName"/>
+public sealed class ApplyStateName(IDalamudPluginInterface pi)
+    : FuncSubscriber<object, string, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(ApplyStateName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.ApplyStateName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.ApplyState"/>
+    public GlamourerApiEc Invoke(JObject state, string objectName, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(state, objectName, key, (ulong)flags);
+
+    /// <inheritdoc cref="IGlamourerApiState.ApplyState"/>
+    public GlamourerApiEc Invoke(string base64State, string objectName, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(base64State, objectName, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<object, string, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c, d) => (int)api.ApplyStateName(a, b, c, (ApplyFlag)d));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.ReapplyState"/>
+public sealed class ReapplyState(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(ReapplyState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.ReapplyState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.ReapplyState"/>
+    public GlamourerApiEc Invoke(int objectIndex, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(objectIndex, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.ReapplyState(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.ReapplyStateName"/>
+public sealed class ReapplyStateName(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(ReapplyStateName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.ReapplyStateName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.ReapplyStateName"/>
+    public GlamourerApiEc Invoke(string objectName, uint key = 0, ApplyFlag flags = ApplyFlagEx.StateDefault)
+        => (GlamourerApiEc)Invoke(objectName, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.ReapplyStateName(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.RevertState"/>
+public sealed class RevertState(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(RevertState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.RevertState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.RevertState"/>
+    public GlamourerApiEc Invoke(int objectIndex, uint key = 0, ApplyFlag flags = ApplyFlagEx.RevertDefault)
+        => (GlamourerApiEc)Invoke(objectIndex, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.RevertState(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.RevertStateName"/>
+public sealed class RevertStateName(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(RevertStateName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.RevertStateName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.RevertStateName"/>
+    public GlamourerApiEc Invoke(string objectName, uint key = 0, ApplyFlag flags = ApplyFlagEx.RevertDefault)
+        => (GlamourerApiEc)Invoke(objectName, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.RevertStateName(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.UnlockState"/>
+public sealed class UnlockState(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(UnlockState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.UnlockState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.UnlockState"/>
+    public GlamourerApiEc Invoke(int objectIndex, uint key = 0)
+        => (GlamourerApiEc)base.Invoke(objectIndex, key);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b) => (int)api.UnlockState(a, b));
+}
+/// <inheritdoc cref="IGlamourerApiState.CanUnlock"/>
+public sealed class CanUnlock(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, (int, bool, bool)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(CanUnlock)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.CanUnlock"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.CanUnlock"/>
+    public GlamourerApiEc Invoke(int objectIndex, uint key, out bool isLocked, out bool canUnlock)
+    {
+        (var ec, isLocked, canUnlock) = base.Invoke(objectIndex, key);
+        return (GlamourerApiEc)ec; 
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, (int, bool, bool)> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b) => ((int)api.CanUnlock(a, b, out var c, out var d), c, d));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.UnlockStateName"/>
+public sealed class UnlockStateName(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(UnlockStateName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.UnlockStateName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.UnlockStateName"/>
+    public GlamourerApiEc Invoke(string objectName, uint key = 0)
+        => (GlamourerApiEc)base.Invoke(objectName, key);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b) => (int)api.UnlockStateName(a, b));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.DeletePlayerState"/>
+public sealed class DeletePlayerState(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, ushort, uint, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(DeletePlayerState)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.DeletePlayerState"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.DeletePlayerState"/>
+    public GlamourerApiEc Invoke(string playerName, ushort worldId = ushort.MaxValue, uint key = 0)
+        => (GlamourerApiEc)base.Invoke(playerName, worldId, key);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, ushort, uint, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.DeletePlayerState(a, b, c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.UnlockAll"/>
+public sealed class UnlockAll(IDalamudPluginInterface pi)
+    : FuncSubscriber<uint, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(UnlockAll)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.UnlockAll"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.UnlockAll"/>
+    public int Invoke(uint key)
+        => base.Invoke(key);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<uint, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, api.UnlockAll);
+}
+
+/// <inheritdoc cref="IGlamourerApiState.RevertToAutomation"/>
+public sealed class RevertToAutomation(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(RevertToAutomation)}.V2";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.RevertToAutomation"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.RevertToAutomation"/>
+    public GlamourerApiEc Invoke(int objectIndex, uint key = 0, ApplyFlag flags = ApplyFlagEx.RevertDefault)
+        => (GlamourerApiEc)Invoke(objectIndex, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.RevertToAutomation(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.RevertToAutomationName"/>
+public sealed class RevertToAutomationName(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, uint, ulong, int>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(RevertToAutomationName)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.RevertToAutomationName"u8;
+
+    /// <inheritdoc cref="IGlamourerApiState.RevertToAutomationName"/>
+    public GlamourerApiEc Invoke(string objectName, uint key = 0, ApplyFlag flags = ApplyFlagEx.RevertDefault)
+        => (GlamourerApiEc)Invoke(objectName, key, (ulong)flags);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, uint, ulong, int> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (a, b, c) => (int)api.RevertToAutomationName(a, b, (ApplyFlag)c));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.AutoReloadGearChanged" />
+public static class AutoReloadGearChanged
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Glamourer.{nameof(AutoReloadGearChanged)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.AutoReloadGearChanged"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<bool> Subscriber(IDalamudPluginInterface pi, params Action<bool>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<bool> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (t => api.AutoReloadGearChanged += t, t => api.AutoReloadGearChanged -= t));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.StateChanged" />
+public static class StateChanged
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(StateChanged)}.V2";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.StateChanged.V2"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint> Subscriber(IDalamudPluginInterface pi, params Action<nint>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (t => api.StateChanged += t, t => api.StateChanged -= t));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.StateChangedWithType" />
+public static class StateChangedWithType
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(StateChangedWithType)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.StateChangedWithType"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint, StateChangeType> Subscriber(IDalamudPluginInterface pi, params Action<nint, StateChangeType>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint, StateChangeType> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (t => api.StateChangedWithType += t, t => api.StateChangedWithType -= t));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.StateFinalized" />
+public static class StateFinalized
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(StateFinalized)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.StateFinalized"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<nint, StateFinalizationType> Subscriber(IDalamudPluginInterface pi, params Action<nint, StateFinalizationType>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<nint, StateFinalizationType> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (t => api.StateFinalized += t, t => api.StateFinalized -= t));
+}
+
+/// <inheritdoc cref="IGlamourerApiState.GPoseChanged" />
+public static class GPoseChanged
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GPoseChanged)}";
+
+    /// <summary> The label as a UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Glamourer.GPoseChanged"u8;
+
+    /// <summary> Create a new event subscriber. </summary>
+    public static EventSubscriber<bool> Subscriber(IDalamudPluginInterface pi, params Action<bool>[] actions)
+        => new(pi, Label, actions);
+
+    /// <summary> Create a provider. </summary>
+    public static EventProvider<bool> Provider(IDalamudPluginInterface pi, IGlamourerApiState api)
+        => new(pi, Label, (t => api.GPoseChanged += t, t => api.GPoseChanged -= t));
+}
+
+

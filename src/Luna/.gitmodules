@@ -1,0 +1,4 @@
+[submodule "ImSharp"]
+	path = ImSharp
+	url = https://github.com/MeowZWR/ImSharp.git
+	branch = gc1.88

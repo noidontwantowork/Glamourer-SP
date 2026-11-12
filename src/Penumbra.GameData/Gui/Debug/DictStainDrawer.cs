@@ -1,0 +1,76 @@
+using ImSharp;
+using Penumbra.GameData.DataContainers;
+using Stain = Penumbra.GameData.Structs.Stain;
+
+namespace Penumbra.GameData.Gui.Debug;
+
+/// <summary> Draw collected stain data. </summary>
+public class DictStainDrawer(DictStain stains) : IGameDataDrawer
+{
+    /// <inheritdoc/>
+    public ReadOnlySpan<byte> Label
+        => "Stains"u8;
+
+    /// <inheritdoc/>
+    public bool Disabled
+        => !stains.Finished;
+
+    private readonly Filter _filter = new();
+
+    /// <inheritdoc/>
+    public void Draw()
+    {
+        const TableFlags flags       = TableFlags.RowBackground | TableFlags.ScrollY | TableFlags.BordersOuter | TableFlags.SizingFixedFit;
+        var              resetScroll = _filter.DrawFilter("筛选..."u8, Im.ContentRegion.Available);
+        var              height      = Im.Style.TextHeightWithSpacing + 2 * Im.Style.CellPadding.Y;
+        using var        table       = Im.Table.Begin("##table"u8, 4, flags, new Vector2(Im.ContentRegion.Available.X, 10 * height));
+        if (!table)
+            return;
+
+        if (resetScroll)
+            Im.Scroll.Y = 0;
+
+        //var       cache   = CacheManager.Instance.GetOrCreateCache(Im.Id.Current, () => new Cache(this, stains, _filter));
+        //using var clipper = new Im.ListClipper(cache.Count, height);
+        //foreach (var (item, _) in clipper.Iterate(cache))
+        //{
+        //    table.DrawColumn(item.Id);
+        //    table.NextColumn();
+        //    ImEx.ColorFrame(item.Stain.RgbaColor);
+        //    table.DrawColumn(item.Name);
+        //    table.DrawColumn(item.Data);
+        //}
+    }
+
+    private record CachedStain(StringU8 Id, StringU8 Data, Stain Stain)
+    {
+        public CachedStain(Stain stain)
+            : this(new StringU8($"{stain.RowIndex.Id:D3}"),
+                new StringU8($"#{stain.R:X2}{stain.G:X2}{stain.B:X2}{(stain.Gloss ? ", Glossy" : string.Empty)}"),
+                stain)
+        { }
+    }
+
+    private sealed class Filter : Utf8FilterBase<CachedStain>
+    {
+        public override bool WouldBeVisible(in CachedStain item, int globalIndex)
+            => Text.Length is 0 || item.Stain.Name.ContainsCaseInsensitive(Text) || item.Id.ContainsCaseInsensitive(Text);
+
+        protected override ReadOnlySpan<byte> ToFilterString(in CachedStain item, int globalIndex)
+            => item.Stain.Name;
+    }
+
+    //private sealed class Cache : FilterCache<CachedStain>
+    //{
+    //    private readonly DictStain _stains;
+    //
+    //    public Cache(DictStainDrawer parent, DictStain stains, Filter filter)
+    //    {
+    //        _stains = stains;
+    //        Filter  = filter;
+    //    }
+    //
+    //    protected override IEnumerable<CachedStain> GetItems()
+    //        => _stains.Select(s => new CachedStain(s.Value));
+    //}
+}

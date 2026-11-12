@@ -1,0 +1,5 @@
+bin/
+obj/
+.vs/
+# Glamourer.json is versioned in Glamourer SP, since it carries the SP name and description.
+private/

@@ -1,0 +1,36 @@
+using System.Collections.Frozen;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using ImSharp;
+using Luna;
+using Penumbra.GameData.DataContainers.Bases;
+using Penumbra.GameData.Enums;
+
+namespace Penumbra.GameData.DataContainers;
+
+/// <summary> A dictionary mapping ItemIds to all primary model items. This requires ItemsByType to be finished. </summary>
+public sealed class ItemsPrimaryModel(IDalamudPluginInterface pi, LunaLogger log, IDataManager gameData, ItemsByType items)
+    : ItemDictionary(pi, log, "ItemDictPrimary", gameData.Language, Version.ItemsPrimaryModel, () => CreateMainItems(items), items.Awaiter)
+{
+    /// <summary> Create data by taking only the primary models for all items. </summary>
+    private static FrozenDictionary<ulong, PseudoEquipItem> CreateMainItems(ItemsByType items)
+    {
+        var dict = new Dictionary<ulong, PseudoEquipItem>(1024 * 16);
+        foreach (var type in FullEquipType.Values.Where(v => !FullEquipTypeExtensions.OffhandTypes.Contains(v)))
+        {
+            var list = items.Value[(int)type];
+            if (type is FullEquipType.Hands)
+            {
+                foreach (var item in list.Where(i => !i.Item1.EndsWith(" (Gauntlets)")))
+                    dict.TryAdd(item.Item2, item);
+            }
+            else
+            {
+                foreach (var item in list)
+                    dict.TryAdd(item.Item2, item);
+            }
+        }
+
+        return dict.ToFrozenDictionary();
+    }
+}

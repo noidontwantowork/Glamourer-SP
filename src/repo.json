@@ -1,0 +1,35 @@
+[
+  {
+    "Author": "Ottermandias",
+    "Name": "Glamourer",
+    "Punchline": "改变和保存玩家外观。",
+    "Description": "为玩家提供更改保存自定义外貌和装备外观的功能。\n将预览选项添加到了Penumbra的“模组-更改项目”选项卡中。\n需要安装并启用Penumbra才能工作。",
+    "Tags": [
+      "Appearance",
+      "Glamour",
+      "Race",
+      "Outfit",
+      "Armor",
+      "Clothes",
+      "Skins",
+      "Customization",
+      "Design",
+      "Character"
+    ],
+    "InternalName": "Glamourer",
+    "AssemblyVersion": "1.6.1.8",
+    "TestingAssemblyVersion": "1.6.1.8",
+    "RepoUrl": "https://github.com/MeowZWR/Glamourer-CN",
+    "ApplicableVersion": "any",
+    "DalamudApiLevel": 15,
+    "TestingDalamudApiLevel": 15,
+    "IsHide": "False",
+    "IsTestingExclusive": "False",
+    "DownloadCount": 1,
+    "LastUpdate": 1618608322,
+    "DownloadLinkInstall": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.6.1.8-cn/Glamourer.zip",
+    "DownloadLinkUpdate": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.6.1.8-cn/Glamourer.zip",
+    "DownloadLinkTesting": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.6.1.8-cn/Glamourer.zip",
+    "IconUrl": "https://static.meowrs.com/Plugins/Glamourer/icon.png"
+  }
+]

@@ -1,0 +1,228 @@
+using Newtonsoft.Json;
+
+namespace Luna;
+
+/// <summary> Static class concerning simplified backup handling. </summary>
+public static partial class Backup
+{
+    public const int MaxNumBackups = 10;
+
+    /// <summary> Create a backup named by ISO 8601 of the current time. </summary>
+    public static void CreatePermanentBackup(LunaLogger logger, DirectoryInfo dir, IReadOnlyCollection<IBackupFile> files, string name,
+        CancellationToken cancel = default)
+        => CreateBackupInternal(logger, dir, files, name, cancel);
+
+    /// <summary> Create a backup named by ISO 8601 of the current time. </summary>
+    /// <remarks>
+    /// If the newest previously existing backup equals the current state of files, do not create a new backup. <br/>
+    /// If the maximum number of backups is exceeded afterward, delete the oldest backup.
+    /// </remarks>
+    public static void CreateAutomaticBackup(LunaLogger logger, DirectoryInfo dir, IReadOnlyCollection<IBackupFile> files,
+        CancellationToken cancel)
+        => CreateBackupInternal(logger, dir, files, null, cancel);
+
+    /// <summary> Check all existing backups for a specific file and try to parse it. </summary>
+    /// <typeparam name="T"> The type the file should be converted into. </typeparam>
+    /// <param name="dir"> The plugins config directory. </param>
+    /// <param name="fileName"> The full path of the file. </param>
+    /// <param name="parsedFile"> On success, the parsed object. </param>
+    /// <param name="message"> Several lines of status messages for failures or the success. </param>
+    /// <param name="parse"> The converter function turning the read data into the object. </param>
+    /// <returns> True on success. </returns>
+    public static bool TryGetFile<T>(DirectoryInfo dir, string fileName, [NotNullWhen(true)] out T? parsedFile, out string message,
+        Func<string, T?>? parse = null)
+    {
+        message =   $"The configuration file {fileName} was corrupted, trying to automatically restore from backup.\n";
+        parse   ??= JsonConvert.DeserializeObject<T>;
+        var directory = CreateBackupDirectory(dir);
+        fileName = Path.GetRelativePath(dir.Parent!.FullName, fileName);
+        // Skip one since the newest backup apparently failed.
+        foreach (var existingBackup in EnumerateBackups(directory).OrderByDescending(f => f.CreationTimeUtc).Skip(1))
+        {
+            try
+            {
+                using var oldFileStream = File.Open(existingBackup.FullName, FileMode.Open);
+                using var oldZip        = new ZipArchive(oldFileStream, ZipArchiveMode.Read);
+                var       entry         = oldZip.GetEntry(fileName);
+                if (entry is null)
+                {
+                    message += $"\nBackup from {existingBackup.CreationTime} did not contain the file {fileName}";
+                    continue;
+                }
+
+                using var file = entry.Open();
+                using var tr   = new StreamReader(file, Encoding.UTF8);
+                var       text = tr.ReadToEnd();
+                parsedFile = parse(text);
+                if (parsedFile is not null)
+                {
+                    message += $"\nBackup from {existingBackup.CreationTime} successfully loaded {fileName}.";
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                message += $"\nBackup from {existingBackup.CreationTime} could not successfully load the file {fileName}: {ex.Message}";
+            }
+        }
+
+        parsedFile = default;
+        return false;
+    }
+
+    private static void CreateBackupInternal(LunaLogger logger, DirectoryInfo dir, IReadOnlyCollection<IBackupFile> files, string? name,
+        CancellationToken cancel)
+    {
+        try
+        {
+            var configDirectory = dir.Parent!.FullName;
+            var directory       = CreateBackupDirectory(dir);
+            cancel.ThrowIfCancellationRequested();
+            if (name is null)
+            {
+                var (newestFile, oldestFile, numFiles) = CheckExistingBackups(directory, cancel);
+                var newBackupName = Path.Combine(directory.FullName, $"{DateTime.Now:yyyyMMddHHmmss}.zip");
+                if (newestFile is null || CheckNewestBackup(logger, newestFile, configDirectory, files, cancel))
+                {
+                    CreateBackupFile(logger, files, newBackupName, configDirectory);
+                    if (numFiles > MaxNumBackups)
+                        oldestFile!.Delete();
+                }
+            }
+            else
+            {
+                var fileName = $"{name}.zip";
+                if (FormatRegex().IsMatch(fileName))
+                    fileName = $"{name}-.zip";
+                var newBackupName = Path.Combine(directory.FullName, fileName);
+                CreateBackupFile(logger, files, newBackupName, configDirectory);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.Error($"Could not create backups:\n{e}");
+        }
+    }
+
+    /// <summary> Obtain the backup directory. Create it if it does not exist. </summary>
+    private static DirectoryInfo CreateBackupDirectory(DirectoryInfo dir)
+    {
+        var path   = Path.Combine(dir.Parent!.Parent!.FullName, "backups", dir.Name);
+        var newDir = new DirectoryInfo(path);
+        if (!newDir.Exists)
+            newDir = Directory.CreateDirectory(newDir.FullName);
+
+        return newDir;
+    }
+
+    /// <summary>
+    /// Check the already existing backups.
+    /// Only keep MaxNumBackups at once, and delete the oldest if the number would be exceeded.
+    /// Return the newest backup.
+    /// </summary>
+    private static (FileInfo? Newest, FileInfo? Oldest, int Count) CheckExistingBackups(DirectoryInfo backupDirectory, CancellationToken cancel)
+    {
+        var       count  = 0;
+        FileInfo? newest = null;
+        FileInfo? oldest = null;
+
+        foreach (var file in EnumerateBackups(backupDirectory))
+        {
+            ++count;
+            var time = file.CreationTimeUtc;
+            if ((oldest?.CreationTimeUtc ?? DateTime.MaxValue) > time)
+                oldest = file;
+
+            if ((newest?.CreationTimeUtc ?? DateTime.MinValue) < time)
+                newest = file;
+            cancel.ThrowIfCancellationRequested();
+        }
+
+        return (newest, oldest, count);
+    }
+
+    [GeneratedRegex(@"^\d{14}\.zip$", RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking)]
+    private static partial Regex FormatRegex();
+
+    /// <summary> Enumerate existing standard backups. </summary>
+    private static IEnumerable<FileInfo> EnumerateBackups(DirectoryInfo backupDirectory)
+        => backupDirectory.EnumerateFiles("*.zip").Where(f => FormatRegex().IsMatch(f.Name));
+
+    /// <summary>
+    /// Compare the newest backup against the currently existing files.
+    /// If there are any differences, return true, and if they are completely identical, return false.
+    /// </summary>
+    private static bool CheckNewestBackup(LunaLogger logger, FileInfo newestFile, string configDirectory, IReadOnlyCollection<IBackupFile> files,
+        CancellationToken cancel)
+    {
+        try
+        {
+            using var oldFileStream = File.Open(newestFile.FullName, FileMode.Open);
+            using var oldZip        = new ZipArchive(oldFileStream, ZipArchiveMode.Read);
+            // Number of stored files is different.
+            if (files.Count != oldZip.Entries.Count)
+                return true;
+
+            // Since number of files is identical, the backups are identical
+            // if every requested file exists in the old backup and is identical.
+            foreach (var file in files)
+            {
+                var relativePath = Path.GetRelativePath(configDirectory, file.Path);
+                if (oldZip.GetEntry(relativePath) is not { } entry)
+                    return true;
+
+                using var oldData = entry.Open();
+                if (!file.Equals(oldData))
+                    return true;
+
+                cancel.ThrowIfCancellationRequested();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            logger.Warning($"Could not read the newest backup file {newestFile.FullName}:\n{e}");
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary> Create the actual backup, storing all the files relative to the given configDirectory in the zip. </summary>
+    /// <remarks> This writes a temporary file first and only moves it to the target location on success. When throwing, the temporary file should be deleted. </remarks>
+    private static void CreateBackupFile(LunaLogger logger, IEnumerable<IBackupFile> files, string fileName, string configDirectory)
+    {
+        var       tmpName    = fileName + ".tmp";
+        try
+        {
+            if(File.Exists(tmpName))
+                File.Delete(tmpName);
+            using (var fileStream = File.Open(tmpName, FileMode.Create))
+            {
+                using var zip = new ZipArchive(fileStream, ZipArchiveMode.Create);
+                foreach (var file in files.Where(f => f.Exists))
+                    file.CreateEntry(zip, configDirectory);
+                fileStream.Flush(true);
+            }
+
+            File.Move(tmpName, fileName, true);
+        }
+        catch
+        {
+            try
+            {
+                if (File.Exists(tmpName))
+                    File.Delete(tmpName);
+            }
+            catch(Exception ex)
+            {
+                logger.Error($"Could not remove temporary backup archive after failure:\n{ex}");
+            }
+
+            throw;
+        }
+    }
+}

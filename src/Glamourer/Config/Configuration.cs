@@ -1,0 +1,202 @@
+﻿using Dalamud.Configuration;
+using Dalamud.Game.ClientState.Keys;
+using Dalamud.Interface.ImGuiNotification;
+using Glamourer.Designs;
+using Glamourer.Gui;
+using Glamourer.Gui.Tabs.DesignTab;
+using Glamourer.Services;
+using Luna;
+using Luna.Generators;
+using Newtonsoft.Json;
+using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
+
+namespace Glamourer.Config;
+
+public sealed partial class Configuration : IPluginConfiguration, ISavable, IService
+{
+    public const int CurrentVersion = 14;
+
+    [JsonIgnore]
+    public readonly EphemeralConfig Ephemeral;
+
+    [JsonIgnore]
+    public readonly UiConfig Ui;
+
+    [JsonIgnore]
+    public readonly FilterConfig Filters;
+
+    [ConfigProperty(EventName = "PcpChanged")]
+    private bool _attachToPcp = true;
+
+    public bool            UseRestrictedGearProtection      { get; set; } = false;
+    public bool            OpenFoldersByDefault             { get; set; } = false;
+    public bool            AutoRedrawEquipOnChanges         { get; set; } = false;
+    public bool            EnableAutoDesigns                { get; set; } = true;
+    public bool            HideApplyCheckmarks              { get; set; } = false;
+    public bool            SmallEquip                       { get; set; } = false;
+    public bool            UnlockedItemMode                 { get; set; } = false;
+    public FestivalSetting FestivalMode                     { get; set; } = FestivalSetting.Undefined;
+    public DateOnly        LastFestivalPopup                { get; set; } = DateOnly.MinValue;
+    public bool            EnableGameContextMenu            { get; set; } = true;
+    public bool            HideWindowInCutscene             { get; set; } = false;
+    public bool            ShowAutomationSetEditing         { get; set; } = true;
+    public bool            ShowAllAutomatedApplicationRules { get; set; } = true;
+    public bool            ShowUnlockedItemWarnings         { get; set; } = true;
+    public bool            RevertManualChangesOnZoneChange  { get; set; } = false;
+    public bool            ShowQuickBarInTabs               { get; set; } = true;
+    public bool            OpenWindowAtStart                { get; set; } = false;
+    public bool            ShowWindowWhenUiHidden           { get; set; } = false;
+    public bool            KeepAdvancedDyesAttached         { get; set; } = true;
+    public bool            ShowPalettePlusImport            { get; set; } = true;
+    public bool            UseFloatForColors                { get; set; } = true;
+    public bool            UseRgbForColors                  { get; set; } = true;
+    public bool            ShowColorConfig                  { get; set; } = true;
+    public bool            ChangeEntireItem                 { get; set; } = false;
+    public bool            AlwaysApplyAssociatedMods        { get; set; } = true;
+    public bool            UseTemporarySettings             { get; set; } = true;
+    public bool            AllowDoubleClickToApply          { get; set; } = false;
+    public bool            RespectManualOnAutomationUpdate  { get; set; } = false;
+    public bool            PreventRandomRepeats             { get; set; } = false;
+
+    [ConfigProperty(EventName = "ActorSortModeChanged")]
+    private ActorSortMode _actorSortMode = ActorSortMode.Default;
+
+    [ConfigProperty]
+    private bool _groupUnlocksByModel;
+
+    [ConfigProperty]
+    private bool _groupUnlocksIgnoreVariants;
+
+    public string PcpFolder                { get; set; } = "PCP";
+    public string PcpColor                 { get; set; } = "";
+    public bool   RememberActorFilter      { get; set; } = false;
+    public bool   RememberDesignFilter     { get; set; } = false;
+    public bool   RememberNpcFilter        { get; set; } = true;
+    public bool   RememberAutomationFilter { get; set; } = false;
+    public bool   RememberUnlocksFilters   { get; set; } = true;
+
+    [ConfigProperty(EventName = "KeepItemComboFilterChanged")]
+    private bool _keepItemComboFilter = true;
+
+    public RoughnessSetting RoughnessSetting { get; set; } = RoughnessSetting.AsIs;
+
+    public DesignPanelFlag HideDesignPanel       { get; set; } = 0;
+    public DesignPanelFlag AutoExpandDesignPanel { get; set; } = 0;
+
+    public DefaultDesignSettings DefaultDesignSettings { get; set; } = new();
+
+    public HeightDisplayType HeightDisplayType { get; set; } = HeightDisplayType.Centimetre;
+
+    [ConfigProperty(EventName = "OnRenameChanged")]
+    private RenameField _showRename = RenameField.BothDataPrio;
+
+    public ModifiableHotkey     ToggleQuickDesignBar { get; set; } = new(VirtualKey.NO_KEY);
+    public DoubleModifier       DeleteDesignModifier { get; set; } = new(ModifierHotkey.Control, ModifierHotkey.Shift);
+    public DoubleModifier       IncognitoModifier    { get; set; } = new(ModifierHotkey.Control);
+    public ChangeLogDisplayType ChangeLogDisplayType { get; set; } = ChangeLogDisplayType.New;
+
+    public QdbButtons QdbButtons { get; set; } =
+        QdbButtons.ApplyDesign | QdbButtons.RevertAll | QdbButtons.RevertAutomation | QdbButtons.RevertAdvancedDyes;
+
+    [JsonConverter(typeof(SortModeConverter))]
+    [JsonProperty(Order = int.MaxValue)]
+    public ISortMode SortMode { get; set; } = ISortMode.FoldersFirst;
+
+    public List<(string Code, bool Enabled)> Codes { get; set; } = [];
+
+#if DEBUG
+    public bool DebugMode { get; set; } = true;
+#else
+    public bool DebugMode { get; set; } = false;
+#endif
+
+    public int Version { get; set; } = CurrentVersion;
+
+    [JsonIgnore]
+    private readonly SaveService _saveService;
+
+    public Configuration(SaveService saveService, ConfigMigrationService migrator, EphemeralConfig ephemeral, UiConfig ui, FilterConfig filters)
+    {
+        _saveService = saveService;
+        Ephemeral    = ephemeral;
+        Ui           = ui;
+        Filters      = filters;
+        Load(migrator);
+    }
+
+    public void Save()
+    {
+        if (!_preventSaving)
+            _saveService.DelaySave(this);
+    }
+
+    private bool _preventSaving;
+
+    private void Load(ConfigMigrationService migrator)
+    {
+        if (!File.Exists(_saveService.FileNames.ConfigurationFile))
+            return;
+
+
+        try
+        {
+            var text = File.ReadAllText(_saveService.FileNames.ConfigurationFile);
+            _preventSaving = true;
+            JsonConvert.PopulateObject(text, this, new JsonSerializerSettings
+            {
+                Error = HandleDeserializationError,
+            });
+        }
+        catch (Exception ex)
+        {
+            Glamourer.Messager.NotificationMessage(ex,
+                "Error reading Configuration, reverting to default.\nYou may be able to restore your configuration using the rolling backups in the XIVLauncher/backups/Glamourer directory.",
+                "Error reading Configuration", NotificationType.Error);
+        }
+        finally
+        {
+            _preventSaving = false;
+        }
+
+        migrator.Migrate(this);
+        return;
+
+        static void HandleDeserializationError(object? sender, ErrorEventArgs errorArgs)
+        {
+            Glamourer.Log.Error(
+                $"Error parsing Configuration at {errorArgs.ErrorContext.Path}, using default or migrating:\n{errorArgs.ErrorContext.Error}");
+            errorArgs.ErrorContext.Handled = true;
+        }
+    }
+
+    public string ToFilePath(FilenameService fileNames)
+        => fileNames.ConfigurationFile;
+
+    public void Save(Stream stream)
+    {
+        using var writer  = new StreamWriter(stream, leaveOpen: true);
+        using var jWriter = new JsonTextWriter(writer);
+        jWriter.Formatting = Formatting.Indented;
+        var serializer = new JsonSerializer { Formatting = Formatting.Indented };
+        serializer.Serialize(jWriter, this);
+    }
+
+    /// <summary> Convert SortMode Types to their name. </summary>
+    private class SortModeConverter : JsonConverter<ISortMode>
+    {
+        public override void WriteJson(JsonWriter writer, ISortMode? value, JsonSerializer serializer)
+        {
+            value ??= ISortMode.FoldersFirst;
+            serializer.Serialize(writer, value.GetType().Name);
+        }
+
+        public override ISortMode ReadJson(JsonReader reader, Type objectType, ISortMode? existingValue, bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            if (serializer.Deserialize<string>(reader) is { } name)
+                return ISortMode.Valid.GetValueOrDefault(name, existingValue ?? ISortMode.FoldersFirst);
+
+            return existingValue ?? ISortMode.FoldersFirst;
+        }
+    }
+}

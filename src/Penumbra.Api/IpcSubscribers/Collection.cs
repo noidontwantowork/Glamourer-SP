@@ -1,0 +1,207 @@
+using Dalamud.Plugin;
+using Dalamud.Plugin.Ipc;
+using Luna;
+using Penumbra.Api.Api;
+using Penumbra.Api.Enums;
+using Penumbra.Api.Wrappers;
+
+namespace Penumbra.Api.IpcSubscribers;
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetCollections"/>
+public sealed class GetCollections(IDalamudPluginInterface pi)
+    : FuncSubscriber<Dictionary<Guid, string>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCollections)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCollections.V5"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetCollections"/>
+    public new Dictionary<Guid, string> Invoke()
+        => base.Invoke();
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<Dictionary<Guid, string>> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.GetCollections);
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetCollectionManagerAdapter"/>
+public sealed class GetCollectionManagerAdapter(IDalamudPluginInterface pi)
+    : FuncSubscriber<IIdDataShareAdapter>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCollectionManagerAdapter)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCollectionManagerAdapter"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetCollectionManagerAdapter"/>
+    public new IIdDataShareAdapter Invoke()
+        => base.Invoke();
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<IIdDataShareAdapter> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.GetCollectionManagerAdapter);
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetCollectionsByIdentifier"/>
+public sealed class GetCollectionsByIdentifier(IDalamudPluginInterface pi)
+    : FuncSubscriber<string, List<(Guid Id, string Name)>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCollectionsByIdentifier)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCollectionsByIdentifier"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetCollectionsByIdentifier"/>
+    public List<(Guid Id, string Name)> Invoke(string name)
+        => base.Invoke(name);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<string, List<(Guid Id, string Name)>> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.GetCollectionsByIdentifier);
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetChangedItemsForCollection"/>
+public sealed class GetChangedItemsForCollection(IDalamudPluginInterface pi)
+    : FuncSubscriber<Guid, Dictionary<string, object?>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetChangedItemsForCollection)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetChangedItemsForCollection"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetChangedItemsForCollection"/>
+    public Dictionary<string, object?> Invoke(Guid collectionId)
+        => base.Invoke(collectionId);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<Guid, Dictionary<string, object?>> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.GetChangedItemsForCollection);
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetCollection"/>
+public sealed class GetCollection(IDalamudPluginInterface pi)
+    : FuncSubscriber<byte, (Guid Id, string Name)?>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCollection)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCollection"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetCollection"/>
+    public (Guid Id, string Name)? Invoke(ApiCollectionType type)
+        => Invoke((byte)type);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<byte, (Guid Id, string Name)?> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, b => api.GetCollection((ApiCollectionType)b));
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.GetCollectionForObject"/>
+public sealed class GetCollectionForObject(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, (bool ObjectValid, bool IndividualSet, (Guid Id, string Name) EffectiveCollection)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(GetCollectionForObject)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.GetCollectionForObject.V5"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.GetCollectionForObject"/>
+    public (bool ObjectValid, bool IndividualSet, (Guid Id, string Name) EffectiveCollection) Invoke(int gameObjectIdx)
+        => base.Invoke(gameObjectIdx);
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, (bool ObjectValid, bool IndividualSet, (Guid Id, string Name) EffectiveCollection)>
+        Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.GetCollectionForObject);
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.SetCollection"/>
+public sealed class SetCollection(IDalamudPluginInterface pi)
+    : FuncSubscriber<byte, Guid?, bool, bool, (int, (Guid Id, string Name)? OldCollection)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(SetCollection)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.SetCollection"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.SetCollectionForObject"/>
+    public (PenumbraApiEc, (Guid Id, string Name)? OldCollection) Invoke(ApiCollectionType type, Guid? collectionId,
+        bool allowCreateNew = true, bool allowDelete = true)
+    {
+        var (ec, pair) = Invoke((byte)type, collectionId, allowCreateNew, allowDelete);
+        return ((PenumbraApiEc)ec, pair);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<byte, Guid?, bool, bool, (int, (Guid Id, string Name)? OldCollection)>
+        Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, (t, g, a, b) =>
+        {
+            var (ret, collection) = api.SetCollection((ApiCollectionType)t, g, a, b);
+            return ((int)ret, collection);
+        });
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.SetCollectionForObject"/>
+public sealed class SetCollectionForObject(IDalamudPluginInterface pi)
+    : FuncSubscriber<int, Guid?, bool, bool, (int, (Guid Id, string Name)? OldCollection)>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(SetCollectionForObject)}.V5";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.SetCollectionForObject.V5"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.SetCollectionForObject"/>
+    public (PenumbraApiEc, (Guid Id, string Name)? OldCollection) Invoke(int gameObjectIdx, Guid? collectionId, bool allowCreateNew = true,
+        bool allowDelete = true)
+    {
+        var (ec, pair) = base.Invoke(gameObjectIdx, collectionId, allowCreateNew, allowDelete);
+        return ((PenumbraApiEc)ec, pair);
+    }
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<int, Guid?, bool, bool, (int, (Guid Id, string Name)? OldCollection)>
+        Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, (i, g, a, b) =>
+        {
+            var (ret, collection) = api.SetCollectionForObject(i, g, a, b);
+            return ((int)ret, collection);
+        });
+}
+
+/// <inheritdoc cref="IPenumbraApiCollection.CheckCurrentChangedItemFunc"/>
+public sealed class CheckCurrentChangedItemFunc(IDalamudPluginInterface pi)
+    : FuncSubscriber<Func<string, ModIdentifier[]>>(pi, Label)
+{
+    /// <summary> The label. </summary>
+    public const string Label = $"Penumbra.{nameof(CheckCurrentChangedItemFunc)}";
+
+    /// <summary> The label as UTF8 string. </summary>
+    public static ReadOnlySpan<byte> LabelU8
+        => "Penumbra.CheckCurrentChangedItemFunc"u8;
+
+    /// <inheritdoc cref="IPenumbraApiCollection.CheckCurrentChangedItemFunc"/>
+    public new Func<string, ModIdentifier[]> Invoke()
+        => base.Invoke();
+
+    /// <summary> Create a provider. </summary>
+    public static FuncProvider<Func<string, ModIdentifier[]>> Provider(IDalamudPluginInterface pi, IPenumbraApiCollection api)
+        => new(pi, Label, api.CheckCurrentChangedItemFunc);
+}

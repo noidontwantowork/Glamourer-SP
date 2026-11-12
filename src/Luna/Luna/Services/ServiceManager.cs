@@ -1,0 +1,253 @@
+using System.Reflection;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Luna;
+
+/// <summary> A service manager that handles some additional things like Dalamud services for Dependency Injection. </summary>
+/// <remarks> Call <see cref="EnsureRequiredServices"/> when finished setting up to create the service provider. </remarks>
+public class ServiceManager : IDisposable
+{
+    private readonly MainLogger           _logger;
+    private readonly ServiceCollection    _collection   = [];
+    private readonly HashSet<IDisposable> _ownedObjects = [];
+
+    /// <summary> Keeps track of the time required to launch all services. </summary>
+    public readonly StartTimeTracker Timers = new();
+
+    /// <summary> The base service provider after setup. </summary>
+    public ServiceProvider? Provider { get; private set; }
+
+    /// <summary> Create a service manager. </summary>
+    /// <param name="logger"> The logger to use. </param>
+    /// <param name="name"> The name for the window system if requested. Requires IUiBuilder to be available. </param>
+    public ServiceManager(MainLogger logger, string? name = null)
+    {
+        _logger = logger;
+
+        // Add logging services and self.
+        _collection.AddSingleton(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(MainLogger<>)));
+        _collection.AddSingleton<ILogger>(_logger);
+        _collection.AddSingleton<LunaLogger>(_logger);
+        _collection.AddSingleton(_logger);
+        _collection.AddSingleton(this);
+        if (name is not null)
+            _collection.AddSingleton(WindowSystem.Factory(name));
+    }
+
+    /// <summary> Get all services that implement a specific interface or class. </summary>
+    /// <typeparam name="T"> The interface or class to implement. </typeparam>
+    /// <returns> An enumeration of all services that can be assigned to objects of type <typeparamref name="T"/>. </returns>
+    public IEnumerable<T> GetServicesImplementing<T>()
+    {
+        if (Provider is null)
+            yield break;
+
+        var type = typeof(T);
+        foreach (var typeDescriptor in _collection)
+        {
+            if (typeDescriptor.Lifetime is ServiceLifetime.Singleton
+             && typeDescriptor.ServiceType.IsAssignableTo(type))
+                yield return (T)Provider.GetRequiredService(typeDescriptor.ServiceType);
+        }
+    }
+
+    /// <summary> Get a service of specific type. </summary>
+    /// <typeparam name="T"> The type of service to get. </typeparam>
+    /// <returns> The service, if available. If not, it will throw. </returns>
+    public T GetService<T>() where T : class
+        => Provider!.GetRequiredService<T>();
+
+    /// <summary> Create the provider and ensure that all services implementing <see cref="IRequiredService"/> that have been registered are created. </summary>
+    public void EnsureRequiredServices()
+    {
+        BuildProvider();
+        foreach (var service in _collection)
+        {
+            if (service.ServiceType.IsAssignableTo(typeof(IRequiredService)))
+                try
+                {
+                    Provider!.GetRequiredService(service.ServiceType);
+                }
+                catch (Exception e)
+                {
+                    _logger.Fatal($"Could not instantiate required service {service.ServiceType}:\n{e}");
+                    throw;
+                }
+        }
+    }
+
+    /// <summary> Create the provider. </summary>
+    public void BuildProvider()
+    {
+        Provider ??= _collection.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes  = false,
+        });
+    }
+
+    /// <summary> Add a specific type as a singleton to the collection. </summary>
+    /// <typeparam name="T"> The type to add. </typeparam>
+    /// <returns> This object to chain calls. </returns>
+    /// <remarks> Singletons are objects that are only instantiated once. This needs to be called before <see cref="EnsureRequiredServices"/>. </remarks>
+    public ServiceManager AddSingleton<T>()
+        => AddSingleton(typeof(T));
+
+    /// <summary> Add an open generic type singleton to the collection. </summary>
+    /// <param name="queryType"> The type of the objects queried from the service provider. </param>
+    /// <param name="implementationType"> The type implementing the query type. If null, <see cref="queryType"/> will be used. </param>
+    /// <remarks> Use for example with <c>typeof(Generic&lt;&gt;)</c>. </remarks>
+    public ServiceManager AddGenericSingleton(Type queryType, Type? implementationType = null)
+    {
+        _collection.AddSingleton(queryType, implementationType ?? queryType);
+        return this;
+    }
+
+    /// <summary> Add a specific type as a singleton to the collection but so that it is constructed via factory method. </summary>
+    /// <param name="factory"> The function that gets invoked to create this type. </param>
+    /// <typeparam name="T"> The type to add. </typeparam>
+    /// <returns> This object to chain calls. </returns>
+    /// <remarks> Singletons are objects that are only instantiated once. This needs to be called before <see cref="EnsureRequiredServices"/>. </remarks>
+    public ServiceManager AddSingleton<T>(Func<IServiceProvider, T> factory) where T : class
+    {
+        _collection.AddSingleton(Func);
+        return this;
+
+        T Func(IServiceProvider p)
+        {
+            _logger.Verbose($"Constructing Service {typeof(T).Name} with custom factory function.");
+            using var timer = Timers.Measure(typeof(T).Name);
+            return factory(p);
+        }
+    }
+
+    /// <summary> Add all services from an assembly implementing <see cref="IService"/> and that are neither interfaces nor abstract to the collection. </summary>
+    /// <param name="assembly"> The assembly to fetch the services from. </param>
+    public void AddIServices(Assembly assembly)
+    {
+        var iType       = typeof(IService);
+        var excludeType = typeof(IConstructedService);
+        foreach (var type in assembly.ExportedTypes.Where(t => t is { IsInterface: false, IsAbstract: false } && iType.IsAssignableFrom(t)))
+        {
+            if (excludeType.IsAssignableFrom(type))
+                continue;
+
+            if (_collection.All(t => t.ServiceType != type))
+                AddSingleton(type);
+        }
+    }
+
+    /// <summary> Add all services from an assembly implementing <see cref="TInterface"/> and that are neither interfaces nor abstract to the collection. </summary>
+    /// <typeparam name="TInterface"> The interface to check for. </typeparam>
+    /// <param name="assembly"> The assembly to fetch the services from. </param>
+    public void AddIServices<TInterface>(Assembly assembly)
+    {
+        var iType = typeof(TInterface);
+        foreach (var type in assembly.ExportedTypes.Where(t => t is { IsInterface: false, IsAbstract: false } && iType.IsAssignableFrom(t)))
+        {
+            if (_collection.All(t => t.ServiceType != type))
+                AddSingleton(type);
+        }
+    }
+
+    /// <summary> Add Dalamud-provided services, including the plugin interface and UI builder, to the collection as singletons. </summary>
+    /// <param name="pi"> The plugin interface to fetch the services from. </param>
+    /// <returns> This object to chain calls. </returns>
+    public ServiceManager AddDalamudServices(IDalamudPluginInterface pi)
+        => AddExistingService(pi)
+            .AddExistingService(pi.UiBuilder)
+            .AddDalamudServices();
+
+    /// <summary> Add an existing object as a singleton service for a specific type. </summary>
+    /// <typeparam name="T"> The type of the object. </typeparam>
+    /// <param name="service"> The existing service. </param>
+    /// <param name="takeOwnership"> If the object is an <see cref="IDisposable"/> and this is true, the service container will dispose it at the end of its lifetime. </param>
+    /// <returns> This object to chain calls. </returns>
+    public ServiceManager AddExistingService<T>(T service, bool takeOwnership = false) where T : class
+    {
+        _collection.AddSingleton(service);
+        if (takeOwnership && service is IDisposable disposable)
+            _ownedObjects.Add(disposable);
+        return this;
+    }
+
+    /// <summary> Dispose all services created via this service provider or taken ownership of. </summary>
+    public void Dispose()
+    {
+        _logger.Debug("Disposing all services.");
+        Provider?.Dispose();
+        foreach (var disposable in _ownedObjects)
+            disposable.Dispose();
+        _ownedObjects.Clear();
+        _logger.Debug("Disposed all services.");
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary> Wrapper for adding singletons with some custom logging and timing. </summary>
+    private ServiceManager AddSingleton(Type type)
+    {
+        _collection.AddSingleton(type, Func);
+        return this;
+
+        object Func(IServiceProvider p)
+        {
+            var constructor = type.GetConstructors().MaxBy(c => c.GetParameters().Length);
+            if (constructor is null)
+                return Activator.CreateInstance(type) ?? throw new Exception($"No constructor available for {type.Name}.");
+
+            var parameterTypes = constructor.GetParameters();
+            var parameters     = parameterTypes.Select(t => p.GetRequiredService(t.ParameterType)).ToArray();
+            _logger.Verbose(
+                $"Constructing Service {type.Name} with {string.Join(", ", parameterTypes.Select(name => $"{name.ParameterType}"))}.");
+            using var timer = Timers.Measure(type.Name);
+            try
+            {
+                return constructor.Invoke(parameters);
+            }
+            catch (Exception e)
+            {
+                _logger.Fatal($"Could not instantiate service {type}:\n{e}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary> Add Dalamud-provided services to the collection as singletons. The <see cref="IDalamudPluginInterface"/> must be added separately. </summary>
+    /// <returns> This object to chain calls. </returns>
+    private ServiceManager AddDalamudServices()
+    {
+        var iType = typeof(IDalamudService);
+        foreach (var type in iType.Assembly.ExportedTypes.Where(t => iType.IsAssignableFrom(t)))
+        {
+            if (_collection.All(t => t.ServiceType != type))
+                AddDalamudService(type);
+        }
+
+        return this;
+    }
+
+    /// <summary> Wrapper for adding singletons from Dalamud with some custom logging and timing. </summary>
+    private void AddDalamudService(Type type)
+    {
+        _collection.AddSingleton(type, Func);
+        return;
+
+        object Func(IServiceProvider p)
+        {
+            var pi = p.GetRequiredService<IDalamudPluginInterface>();
+            _logger.Verbose($"Constructing Service {type.Name} using Dalamud service provider.");
+            object service;
+            using (Timers.Measure(type.Name))
+            {
+                service = pi.GetRequiredService(type);
+            }
+
+            if (service is IDisposable disposableInterface)
+                _ownedObjects.Add(disposableInterface);
+            return service;
+        }
+    }
+}
