@@ -49,5 +49,23 @@
         "DownloadLinkInstall": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
         "DownloadLinkUpdate": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
         "DownloadLinkTesting": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip"
-    }
+    },
+     {
+        "Author": "Noidontwantowork",
+        "Name": "House Teleportation On Top",
+        "Punchline": "让三处房屋常驻传送窗口的常用列表",
+        "Description": "按开关把公寓、个人房屋、部队房屋自动加入传送窗口的常用列表，并在每次登录进入世界后重新检查一次。",
+        "Tags": ["Housing", "Teleport", "UI"],
+        "InternalName": "HouseTeleportationOnTop",
+        "AssemblyVersion": "1.0.0.0",
+        "RepoUrl": "https://github.com/noidontwantowork/House-Teleportation-On-Top",
+        "ApplicableVersion": "any",
+        "DalamudApiLevel": 15,
+        "IsHide": "False",
+        "IsTestingExclusive": "False",
+        "LastUpdate": 1794593662,
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip"
+     }
 ]
