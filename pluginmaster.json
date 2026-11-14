@@ -67,5 +67,23 @@
         "DownloadLinkInstall": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip",
         "DownloadLinkUpdate": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip",
         "DownloadLinkTesting": "https://github.com/noidontwantowork/House-Teleportation-On-Top/releases/download/v1.0.0.0/HouseTeleportationOnTop.zip"
+     },
+     {
+        "Author": "Noidontwantowork",
+        "Name": "Original Dialog Window",
+        "Punchline": "一个纯粹的 FFXIV 原生窗口。",
+        "Description": "生成一个只显示自身、不带任何功能的 FFXIV 原生对话框窗口。窗口不会被游戏原生的隐藏窗口键（Del）和关闭窗口键（Esc）关闭，可自由拖动到游戏画面之外，并可通过主界面按钮一键移回屏幕正中。",
+        "Tags": ["UI", "Utility"],
+        "InternalName": "OriginalDialogWindow",
+        "AssemblyVersion": "0.1.0.0",
+        "RepoUrl": "https://github.com/noidontwantowork/OriginalDialogWindow",
+        "ApplicableVersion": "any",
+        "DalamudApiLevel": 15,
+        "IsHide": "False",
+        "IsTestingExclusive": "False",
+        "LastUpdate": 1794624300,
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip"
      }
 ]
