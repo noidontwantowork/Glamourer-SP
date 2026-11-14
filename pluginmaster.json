@@ -49,5 +49,26 @@
         "DownloadLinkInstall": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
         "DownloadLinkUpdate": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
         "DownloadLinkTesting": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip"
+    },
+    {
+        "Author": "Noidontwantowork",
+        "Name": "FFXIVPVPAutoPlus",
+        "Punchline": "给 FFXIVPVPAuto 的功能模块绑定自定义快捷命令。",
+        "Description": "下拉框列出 FFXIVPVPAuto 的全部功能模块，为每个模块绑定一条自己填的命令（例如 /pvpzantetsuken），游戏内输入该命令或写进游戏宏即可切换对应模块的启用状态。支持删除绑定、命令占用检查与热重载自愈，主窗口命令 /pvpautoplus，不随卫月启动弹出。",
+        "Tags": [
+            "pvp",
+            "utility",
+            "macro"
+        ],
+        "InternalName": "FFXIVPVPAutoPlus",
+        "RepoUrl": "https://github.com/noidontwantowork/FFXIVPVPAutoPlus",
+        "AssemblyVersion": "1.0.0.0",
+        "ApplicableVersion": "any",
+        "DalamudApiLevel": 15,
+        "IsHide": "False",
+        "IsTestingExclusive": "False",
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/FFXIVPVPAutoPlus/releases/download/v1.0.0.0/FFXIVPVPAutoPlus-1.0.0.0.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/FFXIVPVPAutoPlus/releases/download/v1.0.0.0/FFXIVPVPAutoPlus-1.0.0.0.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/FFXIVPVPAutoPlus/releases/download/v1.0.0.0/FFXIVPVPAutoPlus-1.0.0.0.zip"
     }
 ]
