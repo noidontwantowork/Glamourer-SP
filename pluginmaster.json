@@ -85,5 +85,23 @@
         "DownloadLinkInstall": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip",
         "DownloadLinkUpdate": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip",
         "DownloadLinkTesting": "https://github.com/noidontwantowork/OriginalDialogWindow/releases/download/v0.1.0.0/OriginalDialogWindow.zip"
+     },
+     {
+        "Author": "Noidontwantowork",
+        "Name": "vnavmesh-tool",
+        "Punchline": "一键切换国际服版 / 中国服版 vnavmesh",
+        "Description": "在同一游戏进程内切换国际服版与中国服版 vnavmesh。两版命名空间相同，任何时刻只会有一个处于加载状态：切换前会等待所有相关条目真正卸载完成并二次复核，任一条仍未关闭就中止，不会发起加载。使用前请按 README 把两个版本登记为开发插件。",
+        "Tags": ["Utility", "Navigation", "vnavmesh"],
+        "InternalName": "vnavmesh-tool",
+        "AssemblyVersion": "1.0.0.0",
+        "RepoUrl": "https://github.com/noidontwantowork/vnavmesh-tool",
+        "ApplicableVersion": "any",
+        "DalamudApiLevel": 15,
+        "IsHide": "False",
+        "IsTestingExclusive": "False",
+        "LastUpdate": 1794837538,
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.0.0/vnavmesh-tool.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.0.0/vnavmesh-tool.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.0.0/vnavmesh-tool.zip"
      }
 ]
