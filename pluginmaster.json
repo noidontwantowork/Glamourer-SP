@@ -90,18 +90,18 @@
         "Author": "Noidontwantowork",
         "Name": "vnavmesh-tool",
         "Punchline": "一键切换国际服 / 中国服版 vnavmesh",
-        "Description": "方便快捷地切换原版 vnavmesh 和 vnavmesh CN，带有切换的宏命令，为你的不同插件匹配更合适的 vnavmesh 版本。",
+        "Description": "方便快捷地切换原版 vnavmesh 和 vnavmesh CN，带有切换的宏命令，为你的不同插件匹配更合适的 vnavmesh 版本，同时避免切换时重建地图缓存。",
         "Tags": ["Utility", "Navigation", "vnavmesh"],
         "InternalName": "vnavmesh-tool",
-        "AssemblyVersion": "1.0.1.1",
+        "AssemblyVersion": "1.0.3.0",
         "RepoUrl": "https://github.com/noidontwantowork/vnavmesh-tool",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 15,
         "IsHide": "False",
         "IsTestingExclusive": "False",
-        "LastUpdate": 1794917015,
-        "DownloadLinkInstall": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.1.1/vnavmesh-tool.zip",
-        "DownloadLinkUpdate": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.1.1/vnavmesh-tool.zip",
-        "DownloadLinkTesting": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.1.1/vnavmesh-tool.zip"
+        "LastUpdate": 1795006746,
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.3.0/vnavmesh-tool.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.3.0/vnavmesh-tool.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/vnavmesh-tool/releases/download/v1.0.3.0/vnavmesh-tool.zip"
      }
 ]
