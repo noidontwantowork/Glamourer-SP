@@ -22,10 +22,10 @@
         "IconUrl": "https://raw.githubusercontent.com/Ottermandias/Glamourer/main/images/icon.png"
     },
     {
-        "Author": "The Combat Reborn Team / NiGuangOwO（本地化&适配） / KanoNoUta（斗兽奇弈支持）",
+        "Author": "The Combat Reborn Team / NiGuangOwO(本地化&适配) / KanoNoUta(斗兽奇弈支持) / COXOIDA(博兹雅支持)",
         "Name": "BossMod Reborn",
-        "Punchline": "国服本地化 + 斗兽奇弈（驯兽师）支持",
-        "Description": "国服本地化版与斗兽版的合并构建，保留国服中文化与全部独有功能（AEAssist 联动、AOE 广播 IPC、PalacePal陷阱刷新等），并包含「斗兽奇弈（驯兽师 / Beastmaster）」的相关副本支持。",
+        "Punchline": "国服本地化 + 斗兽奇弈（驯兽师）支持 + 博兹雅支持",
+        "Description": "结合上游原版、国服本地化版、斗兽版、博兹雅版等BMR的合并构建，保留国服本地化与全部独有功能（AEAssist 联动、AOE 广播 IPC、PalacePal陷阱刷新等），并额外包含「斗兽奇弈（驯兽师）」和「南方博兹雅战线 / 扎杜诺尔高原」的相关副本支持，从而同时兼容AutoDuty、BOCCHI（新月岛）、Pawprint（斗兽奇弈）、Newfolder3（深层迷宫）、OmniToolbox（博兹雅）等插件的自动化副本功能。",
         "Tags": [
             "combat",
             "boss",
@@ -37,7 +37,7 @@
         ],
         "InternalName": "BossModReborn",
         "RepoUrl": "https://github.com/FFXIV-CombatReborn/BossmodReborn",
-        "AssemblyVersion": "7.5.8.2",
+        "AssemblyVersion": "7.5.8.6",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 15,
         "IconUrl": "https://raw.githubusercontent.com/FFXIV-CombatReborn/RebornAssets/main/IconAssets/BMR_Icon.png",
@@ -46,9 +46,9 @@
             "https://raw.githubusercontent.com/FFXIV-CombatReborn/BossmodReborn/master/Data/image2.png",
             "https://raw.githubusercontent.com/FFXIV-CombatReborn/BossmodReborn/master/Data/image3.png"
         ],
-        "DownloadLinkInstall": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
-        "DownloadLinkUpdate": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip",
-        "DownloadLinkTesting": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.2/BossModRebornCN-SP-7.5.8.2.zip"
+        "DownloadLinkInstall": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.6/BossModRebornCN-SP-7.5.8.6.zip",
+        "DownloadLinkUpdate": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.6/BossModRebornCN-SP-7.5.8.6.zip",
+        "DownloadLinkTesting": "https://github.com/noidontwantowork/BossModRebornCN-SP/releases/download/BossModRebornCN-SP-7.5.8.6/BossModRebornCN-SP-7.5.8.6.zip"
     },
      {
         "Author": "Noidontwantowork",
